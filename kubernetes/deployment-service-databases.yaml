@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-user
+  namespace: online-event-booking-haleema
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-user
+  template:
+    metadata:
+      labels:
+        app: postgres-user
+    spec:
+      containers:
+        - name: postgres-user
+          image: postgres:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: user_service_db
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-user
+  namespace: online-event-booking-haleema
+spec:
+  selector:
+    app: postgres-user
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+# 🔹 Deployment for postgres-booking
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-booking
+  namespace: online-event-booking-haleema
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-booking
+  template:
+    metadata:
+      labels:
+        app: postgres-booking
+    spec:
+      containers:
+        - name: postgres-booking
+          image: postgres:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: booking_service_db
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: POSTGRES_PASSWORD
+---
+# 🔹 Service for postgres-booking
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-booking
+  namespace: online-event-booking-haleema
+spec:
+  selector:
+    app: postgres-booking
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+# 🔹 Deployment for MongoDB (mongo-event)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-event
+  namespace: online-event-booking-haleema
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-event
+  template:
+    metadata:
+      labels:
+        app: mongo-event
+    spec:
+      containers:
+        - name: mongo-event
+          image: mongo:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: MONGO_ROOT_USER
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: MONGO_ROOT_PASSWORD
+---
+# 🔹 Service for MongoDB (mongo-event)
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-event
+  namespace: online-event-booking-haleema
+spec:
+  selector:
+    app: mongo-event
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+  type: ClusterIP

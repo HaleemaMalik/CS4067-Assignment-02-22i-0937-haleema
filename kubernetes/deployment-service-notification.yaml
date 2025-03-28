@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: online-event-booking-haleema
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: devops-assignment-2-notificationservice:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5004
+          env:
+            - name: RABBITMQ_URL
+              value: amqp://rabbitmq:5672
+            - name: MONGO_URI_NOTIFY
+              value: mongodb://mongo-notify:27017/notification-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: online-event-booking-haleema
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - protocol: TCP
+      port: 5004
+      targetPort: 5004
+  type: ClusterIP

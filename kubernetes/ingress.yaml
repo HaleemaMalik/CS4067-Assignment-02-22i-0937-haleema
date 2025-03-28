@@ -1,0 +1,56 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: event-booking-ingress
+  namespace: online-event-booking-haleema
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"  # Set to "true" if enabling HTTPS
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: localhost  # Change this to your actual domain if using a real host
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /api/users
+        pathType: Prefix
+        backend:
+          service:
+            name: user-service
+            port:
+              number: 5001
+      - path: /api/events
+        pathType: Prefix
+        backend:
+          service:
+            name: event-service
+            port:
+              number: 5002
+      - path: /api/bookings
+        pathType: Prefix
+        backend:
+          service:
+            name: booking-service
+            port:
+              number: 5003
+      - path: /api/notifications
+        pathType: Prefix
+        backend:
+          service:
+            name: notification-service
+            port:
+              number: 5004
+
+  # Uncomment this section if setting up HTTPS with a TLS certificate
+  # tls:
+  # - hosts:
+  #   - event-booking.local
+  #   secretName: tls-secret  # Ensure you have a TLS secret created for HTTPS
+

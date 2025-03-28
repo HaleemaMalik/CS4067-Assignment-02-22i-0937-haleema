@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: online-event-booking-haleema
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: devops-assignment-2-userservice:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5001
+          env:
+            - name: DB_HOST
+              value: postgres-user
+            - name: MONGO_URI_EVENT
+              value: "mongodb://mongo-event:27017/event_service_db"
+            - name: POSTGRES_URI
+              value: "postgres://postgres:root@postgres-user:5432/user_service_db"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: POSTGRES_PASSWORD
+            - name: DB_NAME
+              value: user_service_db
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: JWT_SECRET
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: online-event-booking-haleema
+spec:
+  selector:
+    app: user-service
+  ports:
+    - protocol: TCP
+      port: 5001
+      targetPort: 5001
+  type: ClusterIP
+
+  command to apply this file: 
+# kubectl apply -f deployment-service-user.yaml --namespace=online-event-booking-haleema

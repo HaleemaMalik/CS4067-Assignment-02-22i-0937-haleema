@@ -1,0 +1,148 @@
+  # docker compose stop
+  # command to stop all services in docker compose
+
+  services:
+    userservice:
+      build:
+        context: ./user-service
+        dockerfile: Dockerfile
+      ports:
+        - "5001:5001"
+      env_file:
+        - ./user-service/.env     # <- this makes variables available to Node.js
+      depends_on:
+        - postgres-user
+      networks:
+        - app-network
+
+
+    eventservice:
+      build:
+        context: ./event-service
+        dockerfile: Dockerfile
+      ports:
+        - "5002:5002"
+      env_file:
+        - ./event-service/.env
+      depends_on:
+        - mongo-event
+      networks:
+        - app-network
+
+    bookingservice:
+      build:
+        context: ./booking-service
+        dockerfile: Dockerfile
+      ports:
+        - "5003:5003"
+      env_file:
+        - ./booking-service/.env
+      depends_on:
+        - postgres-booking
+        - rabbitmq
+      networks:
+        - app-network
+
+    notificationservice:
+      build:
+        context: ./notification-service
+        dockerfile: Dockerfile
+      ports:
+        - "5004:5004"
+      env_file:
+        - ./notification-service/.env
+      depends_on:
+        - mongo-notify
+        - rabbitmq
+      networks:
+        - app-network
+
+    frontend:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+      ports:
+        - "80:80"
+      environment:
+        - VITE_API_BASE_URL=http://userservice:5001
+      depends_on:
+        - userservice
+        - eventservice
+        - bookingservice
+        - notificationservice
+      networks:
+        - app-network
+
+    # Databases
+    postgres-user:
+      image: postgres:15
+      container_name: postgres-user
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: root
+        POSTGRES_DB: user_service_db
+      ports:
+        - "5432:5432"
+      volumes:
+        - postgres-user-data:/var/lib/postgresql/data
+      networks:
+        - app-network
+
+    postgres-booking:
+      image: postgres:15
+      container_name: postgres-booking
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: root
+        POSTGRES_DB: booking_service_db
+      ports:
+        - "5433:5432"
+      volumes:
+        - postgres-booking-data:/var/lib/postgresql/data
+      networks:
+        - app-network
+
+    mongo-event:
+      image: mongo
+      container_name: mongo-event
+      ports:
+        - "27017:27017"
+      volumes:
+        - mongo-event-data:/data/db
+      networks:
+        - app-network
+
+    mongo-notify:
+      image: mongo
+      container_name: mongo-notify
+      ports:
+        - "27018:27017"
+      volumes:
+        - mongo-notify-data:/data/db
+      networks:
+        - app-network
+
+    rabbitmq:
+      image: rabbitmq:3-management
+      container_name: rabbitmq
+      ports:
+        - "5672:5672"
+        - "15672:15672"  # Management UI
+      networks:
+        - app-network
+
+  volumes:
+    postgres-user-data:
+      driver: local
+    postgres-booking-data:
+      driver: local
+    mongo-event-data:
+      driver: local
+    mongo-notify-data:
+      driver: local
+    mongo-booking-data:
+      driver: local
+
+  networks:
+    app-network:
+      driver: bridge

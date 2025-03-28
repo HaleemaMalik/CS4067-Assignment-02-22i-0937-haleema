@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-service
+  namespace: online-event-booking-haleema
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booking-service
+  template:
+    metadata:
+      labels:
+        app: booking-service
+    spec:
+      containers:
+        - name: booking-service
+          image: devops-assignment-2-bookingservice:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5003
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://postgres:root@postgres-booking:5432/booking_service_db"
+            - name: POSTGRES_URI_BOOKING
+              value: "postgres://postgres:root@postgres-booking:5432/booking_service_db"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: event-booking-secrets
+                  key: POSTGRES_PASSWORD
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-service
+  namespace: online-event-booking-haleema
+spec:
+  selector:
+    app: booking-service
+  ports:
+    - protocol: TCP
+      port: 5003
+      targetPort: 5003
+  type: ClusterIP
